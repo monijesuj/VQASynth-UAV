@@ -1,0 +1,21 @@
+# config_uav_navigation.yaml - Dense Environment Navigation
+directories:
+  output_dir: /home/isr-lab3/James/vqasynth_output
+
+arguments:
+  source_repo_id: remyxai/vqasynth_sample
+  target_repo_name: vqasynth_uav_navigation
+  images: "image"
+  
+  # Navigation-specific tags
+  include_tags: "Dense Environment,Forest,Urban Canyon,Building Corridors,Tree Canopy,Narrow Passages,Obstacle Course,Tight Spaces,Navigation Hazards,Clearance,Path Planning"
+  exclude_tags: "Open Field,Clear Sky,Wide Spaces,Simple Scenes,Indoor,Close-up,Portrait,Abstract"
+  
+  # Navigation parameters
+  navigation:
+    min_clearance_meters: 1.0  # Minimum safe distance from obstacles
+    max_flight_speed_ms: 3.0   # Conservative speed for dense environments
+    depth_accuracy_cm: 5.0     # Required depth estimation accuracy
+    planning_horizon_m: 20.0   # How far ahead to plan path
+    
+  openai_key: ""

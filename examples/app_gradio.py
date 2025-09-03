@@ -84,10 +84,10 @@ def combine_segmented_pointclouds(
 
 
 def run_vqasynth_pipeline(image: PIL.Image, cache_dir: str):
-    depth_map, focal_length = depth.run(image)
+    depth_map, focal_length = depth.run(image)  # We get this but don't need to pass it
     masks, bounding_boxes, captions = localizer.run(image)
-    pointcloud_data, cannonicalized = spatial_scene_constructor.run(
-        str(0), image, depth_map, focal_length, masks, cache_dir
+    pointcloud_data, cannonicalized, depth_map_internal, focal_internal = spatial_scene_constructor.run(
+        str(0), image, masks, cache_dir
     )
     prompts = prompt_generator.run(captions, pointcloud_data, cannonicalized)
     obj_file, selected_prompt = combine_segmented_pointclouds(
