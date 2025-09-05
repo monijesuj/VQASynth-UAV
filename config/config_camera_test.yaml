@@ -1,0 +1,41 @@
+# config/config_camera_test.yaml - Optimized for camera testing
+directories:
+  output_dir: /home/isr-lab3/James/vqasynth_output
+
+realtime_config:
+  max_inference_time_ms: 100  # Target: sub-100ms
+  memory_limit_gb: 4         # Typical UAV compute constraint
+  batch_size: 1              # Real-time single frame processing
+  
+optimization:
+  use_tensorrt: true         # GPU optimization
+  use_quantization: true     # INT8 for speed
+  parallel_stages: true     # Pipeline parallelization
+  
+uav_constraints:
+  max_power_watts: 25       # Typical UAV power budget
+  operating_temp_max: 70    # Thermal constraints
+  vibration_tolerance: high # UAV environment
+
+safety_config:
+  min_confidence_threshold: 0.3  # Much lower for testing (was 0.5)
+  spatial_safety_margin_meters: 2.0
+  emergency_stop_enabled: true
+  backup_navigation: "slam"
+
+navigation_config:
+  max_velocity: 5.0          # m/s
+  min_obstacle_distance: 3.0 # meters
+  planning_horizon: 10       # seconds
+  update_frequency: 10       # Hz
+
+sensor_fusion:
+  camera:
+    weight: 1.0              # Camera only for this test
+    reliability: 0.9
+  lidar:
+    weight: 0.0              # Disabled for camera-only test
+    reliability: 0.95
+  gps:
+    weight: 0.0              # Disabled for camera-only test
+    reliability: 0.8

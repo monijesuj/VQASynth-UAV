@@ -1,0 +1,119 @@
+{
+  "baseline": {
+    "timestamp": 1756995462.3087792,
+    "system_info": {
+      "cpu_count": 32,
+      "memory_gb": 62.5998420715332,
+      "gpu_available": true,
+      "gpu_name": "NVIDIA GeForce RTX 4090"
+    },
+    "performance_metrics": {
+      "avg_pipeline_time_ms": 185.39576530456543,
+      "std_pipeline_time_ms": 24.21023939277838,
+      "min_pipeline_time_ms": 158.65111351013184,
+      "max_pipeline_time_ms": 229.65431213378906
+    },
+    "optimization_status": "baseline"
+  },
+  "profile": {
+    "total_pipeline_time_ms": 198.41599464416504,
+    "total_memory_usage_mb": 3.125,
+    "stage_breakdown": {
+      "depth_processing": {
+        "time_ms": 23.366689682006836,
+        "memory_mb": 2.265625,
+        "timestamp": 1756995463.3684995
+      },
+      "embeddings_generation": {
+        "time_ms": 47.79219627380371,
+        "memory_mb": 0.31640625,
+        "timestamp": 1756995463.416554
+      },
+      "scene_fusion": {
+        "time_ms": 32.334089279174805,
+        "memory_mb": -0.07421875,
+        "timestamp": 1756995463.4491343
+      },
+      "spatial_reasoning": {
+        "time_ms": 75.6528377532959,
+        "memory_mb": 0.6171875,
+        "timestamp": 1756995463.5250723
+      },
+      "localization": {
+        "time_ms": 19.27018165588379,
+        "memory_mb": 0.0,
+        "timestamp": 1756995463.544644
+      }
+    },
+    "bottleneck_stage": "spatial_reasoning",
+    "bottleneck_time_ms": 75.6528377532959,
+    "real_time_capable": false,
+    "optimization_recommendations": [
+      "Pipeline exceeds real-time constraint (100ms)",
+      "Optimize slow stages: depth_processing, embeddings_generation, scene_fusion, spatial_reasoning"
+    ]
+  },
+  "memory": {
+    "system_memory_total_gb": 62.5998420715332,
+    "system_memory_available_gb": 50.335594177246094,
+    "system_memory_percent": 19.6,
+    "gpu_memory_allocated_gb": 0.0,
+    "process_memory_mb": 586.39453125
+  },
+  "bottlenecks": [
+    {
+      "type": "time",
+      "stage": "embeddings_generation",
+      "value": 47.79219627380371,
+      "severity": "medium"
+    },
+    {
+      "type": "time",
+      "stage": "scene_fusion",
+      "value": 32.334089279174805,
+      "severity": "medium"
+    },
+    {
+      "type": "time",
+      "stage": "spatial_reasoning",
+      "value": 75.6528377532959,
+      "severity": "high"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "critical",
+      "category": "real_time",
+      "description": "Pipeline time (198.4ms) exceeds real-time constraint (100ms)",
+      "suggestions": [
+        "Apply model quantization (INT8)",
+        "Implement parallel processing",
+        "Use TensorRT optimization",
+        "Reduce model complexity"
+      ]
+    },
+    {
+      "priority": "high",
+      "category": "embeddings_optimization",
+      "description": "Embeddings stage is bottleneck",
+      "suggestions": [
+        "Use pre-computed embeddings cache",
+        "Implement embedding quantization",
+        "Reduce embedding dimensions",
+        "Use approximate nearest neighbors"
+      ]
+    },
+    {
+      "priority": "high",
+      "category": "reasoning_optimization",
+      "description": "Reasoning stage is bottleneck",
+      "suggestions": [
+        "Implement uncertainty-aware early stopping",
+        "Use knowledge distillation for smaller model",
+        "Cache frequent reasoning patterns",
+        "Implement progressive reasoning"
+      ]
+    }
+  ],
+  "analysis_timestamp": 1756995463.5460503
+}
