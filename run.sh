@@ -2,7 +2,7 @@
 
 CONFIG_FILE=./config/config.yaml
 
-OUTPUT_DIR=$(yq e '.directories.output_dir' $CONFIG_FILE)
+OUTPUT_DIR=$(yq '.directories.output_dir' $CONFIG_FILE | tr -d '"')
 HF_TOKEN=$(cat ~/.cache/huggingface/token)
 
 if [ ! -d "$OUTPUT_DIR" ]; then

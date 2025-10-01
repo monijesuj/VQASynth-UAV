@@ -1,7 +1,6 @@
 # config.yaml
 directories:
-  output_dir: /home/ubuntu/vqasynth_output
-
+  output_dir: /home/isr-lab3/James/vqasynth_output
 arguments:
   source_repo_id: remyxai/vqasynth_sample
   target_repo_name: vqasynth_sample_processed
