@@ -7,8 +7,8 @@ from io import BytesIO
 # Configuration
 # model_id = "remyxai/SpaceOm"
 model_id = "remyxai/SpaceThinker-Qwen2.5VL-3B"
-image_path = "5386811797723543727.jpg"  # or local path
-prompt = "Where is the tallest shelf located and what is the height in meters?"
+image_path = "5399905705605068811.jpg"  # or local path
+prompt = "How tall is the white shelf in meters?"
 system_message = (
   "You are VL-Thinking 🤔, a helpful assistant with excellent reasoning ability. "
   "You should first think about the reasoning process and then provide the answer. "
