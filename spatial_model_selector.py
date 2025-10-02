@@ -18,13 +18,16 @@ class SpatialModelSelector:
         
     def load_available_models(self):
         """Load all available spatial reasoning models"""
+        # Get the directory where this script is located
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        
         model_configs = {
             "SpaceOm": {
-                "path": "./SpaceOm",
+                "path": os.path.join(script_dir, "SpaceOm"),
                 "description": "🌟 SpaceOm - Best overall spatial reasoning capabilities"
             },
             "SpaceThinker": {
-                "path": "./SpaceThinker-Qwen2.5VL-3B", 
+                "path": os.path.join(script_dir, "SpaceThinker-Qwen2.5VL-3B"), 
                 "description": "🎯 SpaceThinker - Most accurate distance measurements with thinking process"
             }
         }

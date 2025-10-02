@@ -1,0 +1,66 @@
+# Configuration file for Spatial Navigation System
+
+# Spatial Reasoning Parameters
+spatial_reasoning:
+  model_type: "SpaceOm"  # or "SpaceThinker" 
+  confidence_threshold: 0.7
+  query_timeout: 5.0  # seconds
+  
+# Safety Parameters  
+safety:
+  min_obstacle_distance: 2.0  # meters
+  max_velocity: 2.0  # m/s
+  emergency_stop_distance: 1.0  # meters
+  height_clearance: 0.5  # meters above obstacles
+  
+# Navigation Parameters
+navigation:
+  waypoint_tolerance: 0.5  # meters
+  max_waypoint_time: 30.0  # seconds
+  default_altitude: 2.0  # meters
+  takeoff_altitude: 2.0  # meters
+  
+# Camera Parameters
+camera:
+  rgb_topic: "/drone/rgb_camera/image_raw"
+  depth_topic: "/drone/depth_camera/depth/image_raw" 
+  down_camera_topic: "/drone/down_camera/image_raw"
+  image_width: 640
+  image_height: 480
+  
+# Mission Parameters
+missions:
+  corridor_navigation:
+    waypoints:
+      - {x: 0, y: 0, z: 2}
+      - {x: 0, y: 3, z: 2} 
+      - {x: 0, y: 6, z: 2}
+      - {x: 0, y: 9, z: 2}
+      - {x: 0, y: 0, z: 2}
+    max_velocity: 1.0
+    
+  obstacle_avoidance:
+    waypoints:
+      - {x: 0, y: 0, z: 2}
+      - {x: -5, y: 0, z: 2}
+      - {x: -5, y: 3, z: 2}
+      - {x: 5, y: 3, z: 2}
+      - {x: 5, y: 7, z: 2}
+      - {x: 0, y: 0, z: 2}
+    max_velocity: 0.5
+    
+  height_variation:
+    waypoints:
+      - {x: 0, y: 0, z: 1}
+      - {x: 5, y: 0, z: 3}
+      - {x: 10, y: 0, z: 5}
+      - {x: 5, y: 0, z: 2}
+      - {x: 0, y: 0, z: 2}
+    max_velocity: 1.5
+
+# Logging Parameters
+logging:
+  log_level: "INFO"  # DEBUG, INFO, WARN, ERROR
+  log_spatial_analysis: true
+  log_navigation_decisions: true
+  log_safety_events: true

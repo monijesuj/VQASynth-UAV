@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Launch Gazebo with spatial navigation world -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find spatial_navigation)/worlds/spatial_navigation_world.world"/>
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+        <arg name="verbose" value="true"/>
+    </include>
+
+    <!-- Spawn drone model -->
+    <node name="spawn_drone" pkg="gazebo_ros" type="spawn_model" 
+          args="-file $(find spatial_navigation)/models/spatial_reasoning_drone/model.sdf 
+                -sdf -model spatial_drone -x 0 -y 0 -z 1" 
+          output="screen"/>
+
+    <!-- MAVROS connection to ArduPilot SITL -->
+    <include file="$(find mavros)/launch/apm.launch">
+        <arg name="fcu_url" value="udp://:14550@127.0.0.1:14551"/>
+        <arg name="gcs_url" value=""/>
+        <arg name="tgt_system" value="1"/>
+        <arg name="tgt_component" value="1"/>
+        <arg name="log_output" value="screen"/>
+    </include>
+
+    <!-- Spatial reasoning node -->
+    <node name="spatial_reasoning_navigator" pkg="spatial_navigation" type="spatial_reasoning_node.py" 
+          output="screen" respawn="true">
+        <param name="auto_takeoff" value="false"/>
+        <param name="safe_distance" value="2.0"/>
+        <param name="max_velocity" value="1.0"/>
+    </node>
+
+    <!-- Navigation controller -->
+    <node name="navigation_controller" pkg="spatial_navigation" type="navigation_controller.py" 
+          output="screen" respawn="true"/>
+
+    <!-- Static transform publishers for coordinate frames -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_broadcaster"
+          args="0 0 0 0 0 0 1 base_link camera_link"/>
+          
+    <node pkg="tf2_ros" type="static_transform_publisher" name="map_broadcaster"
+          args="0 0 0 0 0 0 1 map base_link"/>
+
+    <!-- RViz for visualization (optional) -->
+    <node name="rviz" pkg="rviz" type="rviz" 
+          args="-d $(find spatial_navigation)/config/spatial_navigation.rviz" 
+          output="screen" if="$(arg use_rviz)" />
+
+</launch>
