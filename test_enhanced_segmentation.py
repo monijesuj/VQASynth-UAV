@@ -29,12 +29,34 @@ def test_imports():
         return False
     
     try:
+        # Add the sam2 directory to the path to handle the directory structure issue
+        import sys
+        from pathlib import Path
+        sam2_path = Path(__file__).parent / "sam2"
+        if str(sam2_path) not in sys.path:
+            sys.path.insert(0, str(sam2_path))
+        
         from sam2.build_sam import build_sam2
         from sam2.sam2_image_predictor import SAM2ImagePredictor
         print("✅ SAM2: Available")
     except ImportError as e:
         print(f"❌ SAM2: {e}")
         return False
+    except RuntimeError as e:
+        if "parent directory" in str(e):
+            print("⚠️  SAM2: Directory structure issue - will try alternative import")
+            try:
+                # Try importing from the sam2 subdirectory
+                sys.path.insert(0, str(Path(__file__).parent / "sam2" / "sam2"))
+                from build_sam import build_sam2
+                from sam2_image_predictor import SAM2ImagePredictor
+                print("✅ SAM2: Available (alternative import)")
+            except ImportError as e2:
+                print(f"❌ SAM2: {e2}")
+                return False
+        else:
+            print(f"❌ SAM2: {e}")
+            return False
     
     try:
         from transformers import CLIPSegProcessor, CLIPSegForImageSegmentation

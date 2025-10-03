@@ -277,8 +277,10 @@ class EnhancedSemanticSegmentation:
             # Convert to numpy
             mask = preds.squeeze().cpu().numpy()
             
-            # Resize to original image size
-            mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
+            # Resize to original image size using PIL
+            pil_mask = Image.fromarray(mask)
+            pil_mask = pil_mask.resize((image.shape[1], image.shape[0]), Image.NEAREST)
+            mask = np.array(pil_mask)
             
             return mask.astype(np.uint8)
             
@@ -423,8 +425,15 @@ class EnhancedSemanticSegmentation:
             
             image_rgb = image_rgb.astype(np.uint8)
             
+            # Convert to PIL Image for SAM2 compatibility
+            from PIL import Image
+            # Ensure the image is in the correct format
+            if image_rgb.dtype != np.uint8:
+                image_rgb = image_rgb.astype(np.uint8)
+            pil_image = Image.fromarray(image_rgb, 'RGB')
+            
             # Set image in SAM2
-            self.models['sam2'].set_image(image_rgb)
+            self.models['sam2'].set_image(pil_image)
             
             # Prepare prompts
             if len(prompts['boxes']) > 0:
@@ -457,6 +466,8 @@ class EnhancedSemanticSegmentation:
                 
         except Exception as e:
             print(f"   ❌ SAM2 segmentation error: {e}")
+            import traceback
+            traceback.print_exc()
             return None, 0.0
     
     def fuse_segmentation_results(self, sam2_mask: Optional[np.ndarray], 
@@ -474,26 +485,36 @@ class EnhancedSemanticSegmentation:
             fusion_info['models_used'] = ['sam2', 'clipseg']
             fusion_info['fusion_method'] = 'intersection'
             
+            # Ensure masks are binary
+            sam2_binary = (sam2_mask > 0).astype(np.uint8)
+            clipseg_binary = (clipseg_mask > 0).astype(np.uint8)
+            
             # Intersection of both masks
-            fused_mask = np.logical_and(sam2_mask, clipseg_mask).astype(np.uint8)
+            fused_mask = np.logical_and(sam2_binary, clipseg_binary).astype(np.uint8)
             
             # If intersection is too small, use union
             if np.sum(fused_mask) < 100:
-                fused_mask = np.logical_or(sam2_mask, clipseg_mask).astype(np.uint8)
+                fused_mask = np.logical_or(sam2_binary, clipseg_binary).astype(np.uint8)
                 fusion_info['fusion_method'] = 'union'
             
             fusion_info['confidence'] = (sam2_score + 0.7) / 2  # Average confidence
             
+            print(f"   🔍 Fusion Debug - SAM2 mask sum: {np.sum(sam2_binary)}")
+            print(f"   🔍 Fusion Debug - CLIPSeg mask sum: {np.sum(clipseg_binary)}")
+            print(f"   🔍 Fusion Debug - Fused mask sum: {np.sum(fused_mask)}")
+            
         elif sam2_mask is not None:
-            fused_mask = sam2_mask
+            fused_mask = (sam2_mask > 0).astype(np.uint8)
             fusion_info['models_used'] = ['sam2']
             fusion_info['fusion_method'] = 'sam2_only'
+            print(f"   🔍 Fusion Debug - SAM2 only mask sum: {np.sum(fused_mask)}")
             
         elif clipseg_mask is not None:
-            fused_mask = clipseg_mask
+            fused_mask = (clipseg_mask > 0).astype(np.uint8)
             fusion_info['models_used'] = ['clipseg']
             fusion_info['fusion_method'] = 'clipseg_only'
             fusion_info['confidence'] = 0.7
+            print(f"   🔍 Fusion Debug - CLIPSeg only mask sum: {np.sum(fused_mask)}")
             
         else:
             # No segmentation available
@@ -530,26 +551,70 @@ class EnhancedSemanticSegmentation:
         if np.sum(final_mask) == 0:
             return None, {}
         
-        # Create enhanced visualization
-        overlay = image.copy()
-        colored_mask = np.zeros_like(image)
-        colored_mask[final_mask] = [0, 255, 0]  # Green mask
-        overlay = cv2.addWeighted(overlay, 0.7, colored_mask, 0.3, 0)
+        # Create enhanced visualization - preserve original image
+        # Ensure image is in RGB format for display
+        if len(image.shape) == 3 and image.shape[2] == 3:
+            # Convert BGR to RGB if needed
+            overlay = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.uint8)
+        else:
+            overlay = image.copy().astype(np.uint8)
         
-        # Draw prompts
-        if len(prompts['point_coords']) > 0:
-            for coord, label in zip(prompts['point_coords'], prompts['point_labels']):
-                color = (0, 255, 0) if label == 1 else (0, 0, 255)
-                cv2.circle(overlay, (int(coord[0]), int(coord[1])), 8, color, -1)
+        # Debug: Check mask properties
+        print(f"   🔍 Debug - Original image shape: {image.shape}")
+        print(f"   🔍 Debug - Overlay shape: {overlay.shape}")
+        print(f"   🔍 Debug - Final mask shape: {final_mask.shape}")
+        print(f"   🔍 Debug - Final mask sum: {np.sum(final_mask)}")
         
-        # Draw bounding boxes
-        if len(prompts['boxes']) > 0:
-            for box in prompts['boxes']:
-                x1, y1, x2, y2 = box.astype(int)
-                cv2.rectangle(overlay, (x1, y1), (x2, y2), (255, 0, 0), 2)
+        # Apply mask directly to the original image using safe operations
+        # Create a copy for the mask overlay
+        result_image = overlay.copy()
         
-        # Convert to RGB for Gradio
-        overlay_rgb = cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
+        # Apply red mask overlay where segmentation is detected
+        mask_indices = final_mask > 0
+        
+        # Safe mask application using basic Python operations
+        if mask_indices.sum() > 0:
+            # Create red overlay color
+            red_color = np.array([255, 100, 100], dtype=np.uint8)
+            
+            # Blend using simple array operations (avoiding problematic np functions)
+            alpha = 0.4
+            for i in range(3):
+                channel = result_image[:, :, i]
+                channel[mask_indices] = (channel[mask_indices].astype(float) * (1 - alpha) + 
+                                        red_color[i] * alpha).astype(np.uint8)
+                result_image[:, :, i] = channel
+        
+        print(f"   🔍 Debug - Result image shape: {result_image.shape}")
+        print(f"   🔍 Debug - Mask pixels: {mask_indices.sum()}")
+        
+        overlay = result_image
+        
+        # Draw prompts (disabled due to OpenCV issues)
+        # if len(prompts['point_coords']) > 0:
+        #     # Ensure overlay is in correct format for OpenCV
+        #     overlay = overlay.astype(np.uint8)
+        #     for coord, label in zip(prompts['point_coords'], prompts['point_labels']):
+        #         color = (0, 255, 0) if label == 1 else (0, 0, 255)
+        #         cv2.circle(overlay, (int(coord[0]), int(coord[1])), 8, color, -1)
+        
+        # Draw bounding boxes (disabled due to OpenCV issues)
+        # if len(prompts['boxes']) > 0:
+        #     for box in prompts['boxes']:
+        #         x1, y1, x2, y2 = box.astype(int)
+        #         cv2.rectangle(overlay, (x1, y1), (x2, y2), (255, 0, 0), 2)
+        
+        # Convert to RGB for Gradio (already in RGB from earlier conversion)
+        # Ensure the output is in the correct format for Gradio
+        try:
+            overlay_rgb = np.asarray(overlay, dtype=np.uint8)
+            print(f"   🔍 Debug - Output type: {type(overlay_rgb)}")
+            print(f"   🔍 Debug - Output is ndarray: {isinstance(overlay_rgb, np.ndarray)}")
+            if isinstance(overlay_rgb, np.ndarray):
+                print(f"   🔍 Debug - Output shape: {overlay_rgb.shape}")
+        except Exception as e:
+            print(f"   ⚠️  Error preparing output: {e}")
+            overlay_rgb = overlay
         
         # Prepare comprehensive info
         info = {
@@ -579,9 +644,12 @@ def create_enhanced_gradio_interface():
         
         # Save temporary image
         import tempfile
+        from PIL import Image
         with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as f:
             temp_path = f.name
-            cv2.imwrite(temp_path, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            # Convert numpy array to PIL Image and save
+            pil_image = Image.fromarray(image)
+            pil_image.save(temp_path)
         
         # Run segmentation
         result, info = segmenter.segment_image(temp_path, text_prompt)
