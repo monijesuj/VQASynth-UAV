@@ -1,0 +1,19 @@
+# Requirements for Live Spatial VQA System
+# Install with: pip install -r requirements_live_vqa.txt
+
+# Core ML/Vision
+torch>=2.0.0
+transformers>=4.44.0
+accelerate>=0.34.0
+pillow>=9.0.0
+numpy>=1.26.0
+
+# Camera and Video
+opencv-python>=4.7.0
+pyrealsense2>=2.54.0  # Optional: Only needed for RealSense cameras
+
+# Web Interface
+gradio>=4.0.0
+
+# Utilities
+tqdm>=4.66.0

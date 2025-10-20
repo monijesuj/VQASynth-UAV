@@ -91,7 +91,8 @@ class EnhancedSemanticSegmentation:
             import groundingdino
             from groundingdino.util.inference import Model as GroundingDINOModel
             
-            config_path = "GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py"
+            # Use the repo config path
+            config_path = "GroundingDINO_repo/groundingdino/config/GroundingDINO_SwinT_OGC.py"
             checkpoint_path = "GroundingDINO/weights/groundingdino_swint_ogc.pth"
             
             if Path(config_path).exists() and Path(checkpoint_path).exists():
@@ -102,10 +103,14 @@ class EnhancedSemanticSegmentation:
                 )
                 print("✅ GroundingDINO initialized")
             else:
-                print("⚠️  GroundingDINO not found")
+                print(f"⚠️  GroundingDINO files not found:")
+                print(f"     Config: {config_path} exists={Path(config_path).exists()}")
+                print(f"     Weights: {checkpoint_path} exists={Path(checkpoint_path).exists()}")
                 self.models['grounding_dino'] = None
         except Exception as e:
             print(f"⚠️  GroundingDINO not available: {e}")
+            import traceback
+            traceback.print_exc()
             self.models['grounding_dino'] = None
     
     def _setup_ram(self):
@@ -186,20 +191,27 @@ class EnhancedSemanticSegmentation:
             return []
         
         try:
+            # GroundingDINO expects RGB image
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) if len(image.shape) == 3 else image
+            
             detections = self.models['grounding_dino'].predict_with_classes(
-                image=image,
+                image=image_rgb,
                 classes=[text_prompt],
                 box_threshold=box_threshold,
                 text_threshold=text_threshold
             )
             
+            # detections is a supervision.Detections object with xyxy attribute (numpy array)
             boxes = []
-            if hasattr(detections, 'xyxy'):
-                boxes = detections.xyxy.cpu().numpy()
+            if hasattr(detections, 'xyxy') and len(detections.xyxy) > 0:
+                boxes = detections.xyxy  # Already a numpy array from supervision
+                print(f"   🎯 GroundingDINO detected {len(boxes)} object(s)")
             
             return boxes
         except Exception as e:
             print(f"⚠️  GroundingDINO detection failed: {e}")
+            import traceback
+            traceback.print_exc()
             return []
     
     def get_clip_attention_map(self, image: np.ndarray, text_prompt: str) -> Tuple[float, np.ndarray]:
@@ -309,7 +321,7 @@ class EnhancedSemanticSegmentation:
         
         # 2. Try GroundingDINO for object detection
         boxes = self.get_grounding_dino_boxes(image, text_prompt)
-        if boxes:
+        if len(boxes) > 0:
             prompts['boxes'] = boxes
             prompts['confidence_scores']['grounding_dino'] = 0.8  # Placeholder
             print(f"   📦 GroundingDINO found {len(boxes)} boxes")
