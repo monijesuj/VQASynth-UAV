@@ -337,16 +337,3 @@ This simulation environment builds upon:
 - **ROS**: Robot Operating System
 - **SpaceOm/SpaceThinker**: Spatial reasoning models
 
-### Citation
-```bibtex
-@software{spatial_navigation_sim,
-  title={Gazebo Spatial Navigation Simulation},
-  author={VQASynth Navigation Team},
-  year={2025},
-  url={https://github.com/your-repo/spatial-navigation-sim}
-}
-```
-
----
-
-**🚁 Ready to test spatial reasoning navigation? Start with `./setup_simulation.sh`!**
